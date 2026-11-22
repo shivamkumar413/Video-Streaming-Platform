@@ -13,3 +13,7 @@ export const BUCKET_EXPIRY = Number(process.env.BUCKET_EXPIRY);
 
 export const MAX_FILE_SIZE = Number(process.env.MAX_FILE_SIZE);
 
+export const DATABASE_URL = process.env.DATABASE_URL;
+
+export const DIRECT_DB_URL = process.env.DIRECT_DB_URL;
+
