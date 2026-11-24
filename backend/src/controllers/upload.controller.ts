@@ -1,28 +1,31 @@
 import type { Request, Response } from 'express';
-import s3 from '../config/s3.config.ts';
-import { PutObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { BUCKET_EXPIRY } from '../config/server.config.ts';
-import { randomUUID } from 'node:crypto';
+import { customErrorResponse, internalServerErrorResponse } from '../utils/commonResponse/responseObject.utils.ts';
+import { StatusCodes } from 'http-status-codes';
+import { getSignedUrlService } from '../services/upload.service.ts';
 
 
 export async function getS3SignedUrl(req : Request,res : Response){
 
     // Now what i have to figure out when some one will only send file/video then how to know its name and type
-    const videoId = randomUUID();
+    try{
+        const response = await getSignedUrlService(req.body);
 
-    const command = new PutObjectCommand({
-        Bucket : process.env.S3_BUCKET_NAME!,
-        Key : `video/${videoId}.mp4`,
-        ContentType: "video/mp4",
-    })
+        return res.status(StatusCodes.OK).json({
+            message : 'Successfully generated presigned url for video upload',
+            data : response
+        })
+    }catch(err : any){
+        console.log(`Error while getting presigned url for video upload ${err}`)
+        if(err.statusCode){
+            return res
+                .status(err.statusCode)
+                .json(customErrorResponse(err));
+        }
 
-    const signedUrl = await getSignedUrl(s3,command,{
-        expiresIn : BUCKET_EXPIRY,
-    })
+        return res
+            .status(StatusCodes.INTERNAL_SERVER_ERROR)
+            .json(internalServerErrorResponse(err));
+    }
     
-    return res.json({
-        uploadURL : signedUrl
-    })
     
 }
